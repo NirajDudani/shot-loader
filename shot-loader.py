@@ -1,3 +1,25 @@
+# Folder Structure:
+# Root_Directory/
+#     Project_A/
+#         Sequence_001/
+#             Shot_001/
+#                 Element_001/
+#                     Project_A_Sequence_001_Shot_001_Element_001_v0001.nk
+#                     Project_A_Sequence_001_Shot_001_Element_001_v0002.nk
+#                     ...
+#                 Element_002/
+#                     Project_A_Sequence_001_Shot_001_Element_002_v0001.nk
+#                     ...
+#             Shot_002/
+#                 Element_001/
+#                     Project_A_Sequence_001_Shot_002_Element_001_v0001.nk
+#                     ...
+#         Sequence_002/
+#             ...
+#     Project_B/
+#         ...
+# Currently, this script is developed for this folder structure.
+
 from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtWidgets import QFileDialog
 import os
