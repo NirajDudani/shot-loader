@@ -1,16 +1,3 @@
-# Shot Loader for Nuke
-#
-# Expected folder structure:
-#     Root_Directory/
-#         Project_A/
-#             Sequence_001/
-#                 Shot_001/
-#                     Element_001/
-#                         Project_A_Sequence_001_Shot_001_Element_001_v0001.nk
-#                     Element_002/
-#                 Shot_002/
-#         Project_B/
-
 import nuke
 import os
 
