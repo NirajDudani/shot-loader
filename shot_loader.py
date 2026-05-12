@@ -79,7 +79,7 @@ def show_dialog():
 
         def browsefiles(self):
             start_dir = self._root() or os.path.expanduser("~")
-            folder_path = QFileDialog.getExistingDirectory(None, "Select Folder", start_dir)
+            folder_path = QFileDialog.getExistingDirectory(self, "Select Folder", start_dir)
             if folder_path:
                 self.lineEdit.setText(folder_path)
 
@@ -91,11 +91,11 @@ def show_dialog():
             self.comboBox_5.clear()
             root = self._root()
             if not root or not os.path.isdir(root):
-                QtWidgets.QMessageBox.warning(None, "Error", "No valid root folder selected. Please Browse first.")
+                QtWidgets.QMessageBox.warning(self, "Error", "No valid root folder selected. Please Browse first.")
                 return
             projects = self._list_subfolders(root)
             if not projects:
-                QtWidgets.QMessageBox.information(None, "No Projects", "No project folders found in the selected root.")
+                QtWidgets.QMessageBox.information(self, "No Projects", "No project folders found in the selected root.")
                 return
             self.comboBox.addItems(projects)
             self.update_sequence()
@@ -155,32 +155,44 @@ def show_dialog():
                     self.comboBox_3.currentText(), self.comboBox_4.currentText(),
                     self.comboBox_5.currentText()]
             if not all(vals):
-                QtWidgets.QMessageBox.warning(None, "Error", "Please select a project, sequence, shot, element, and version.")
+                QtWidgets.QMessageBox.warning(self, "Error", "Please select a project, sequence, shot, element, and version.")
                 return
             project, seq, shot, element, version = vals
             file_name = "{}_{}_{}_{}_{}.nk".format(project, seq, shot, element, version)
             full_path = os.path.normpath(os.path.join(self._root(), project, seq, shot, element, file_name))
-            if os.path.isfile(full_path):
-                nuke.scriptOpen(full_path)
-                QtWidgets.QMessageBox.information(None, "Scene Opened", "Opened:\n{}".format(full_path))
-            else:
-                QtWidgets.QMessageBox.warning(None, "File Not Found", "Could not find:\n{}".format(full_path))
+            if not os.path.isfile(full_path):
+                QtWidgets.QMessageBox.warning(self, "File Not Found", "Could not find:\n{}".format(full_path))
+                return
+
+            # FIX: warn user if current script has unsaved changes before opening a new scene
+            if nuke.modified():
+                reply = QtWidgets.QMessageBox.question(
+                    self,
+                    "Unsaved Changes",
+                    "The current script has unsaved changes. Open the new scene anyway?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+                )
+                if reply != QtWidgets.QMessageBox.Yes:
+                    return
+
+            nuke.scriptOpen(full_path)
+            QtWidgets.QMessageBox.information(self, "Scene Opened", "Opened:\n{}".format(full_path))
 
         def saveScene(self):
             root = self._root()
             if not root:
-                QtWidgets.QMessageBox.warning(None, "Error", "Root directory not selected.")
+                QtWidgets.QMessageBox.warning(self, "Error", "Root directory not selected.")
                 return
             project = self.comboBox.currentText()
             seq     = self.comboBox_2.currentText()
             shot    = self.comboBox_3.currentText()
             element = self.comboBox_4.currentText()
             if not all([project, seq, shot, element]):
-                QtWidgets.QMessageBox.warning(None, "Error", "Please select a project, sequence, shot, and element.")
+                QtWidgets.QMessageBox.warning(self, "Error", "Please select a project, sequence, shot, and element.")
                 return
             folder = os.path.join(root, project, seq, shot, element)
             if not os.path.isdir(folder):
-                QtWidgets.QMessageBox.warning(None, "Error", "Target save directory does not exist:\n{}".format(folder))
+                QtWidgets.QMessageBox.warning(self, "Error", "Target save directory does not exist:\n{}".format(folder))
                 return
             prefix = "{}_{}_{}_{}_".format(project, seq, shot, element)
             version_numbers = []
@@ -191,7 +203,7 @@ def show_dialog():
                         if token.startswith("v") and token[1:].isdigit():
                             version_numbers.append(int(token[1:]))
             except OSError as e:
-                QtWidgets.QMessageBox.warning(None, "Error", "Could not scan target directory:\n{}".format(e))
+                QtWidgets.QMessageBox.warning(self, "Error", "Could not scan target directory:\n{}".format(e))
                 return
             new_version = max(version_numbers) + 1 if version_numbers else 1
             new_file = "{}{}.nk".format(prefix, "v{:04d}".format(new_version))
@@ -199,9 +211,9 @@ def show_dialog():
             try:
                 nuke.scriptSaveAs(new_path)
             except RuntimeError as e:
-                QtWidgets.QMessageBox.warning(None, "Save Failed", "Nuke could not save:\n{}".format(e))
+                QtWidgets.QMessageBox.warning(self, "Save Failed", "Nuke could not save:\n{}".format(e))
                 return
-            QtWidgets.QMessageBox.information(None, "Save Successful", "Scene saved as:\n{}".format(new_path))
+            QtWidgets.QMessageBox.information(self, "Save Successful", "Scene saved as:\n{}".format(new_path))
             self.close()
 
     dialog = ShotLoaderDialog()
